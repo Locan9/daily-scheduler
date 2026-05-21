@@ -1,9 +1,8 @@
 import os
 import sys
 from PyQt6 import uic
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QApplication, QInputDialog, QListWidgetItem, QMainWindow
-#maybe add timer 
 
 class TaskNode:
     def __init__(self, activity, time, note):
@@ -20,6 +19,13 @@ class NovaTreeScheduler(QMainWindow):
 
         self.front = None
         self.rear = None
+
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_countdown)
+
+        self.timeEdit.setDisplayFormat("mm")
+        self.timeEdit.timeChanged.connect(self.start_countdown)
+        self.progressBar.setValue(0)
 
         self.btn_add.setText("Add")
         self.btn_delete.setText("Delete")
@@ -75,6 +81,23 @@ class NovaTreeScheduler(QMainWindow):
             self.rear = node
 
         self.refresh_task_list()
+
+    def start_countdown(self):
+        self.timer.stop()
+        total_seconds = self.timeEdit.time().minute() * 60
+        if total_seconds <= 0:
+            self.progressBar.setValue(0)
+            return
+
+        self.progressBar.setRange(0, total_seconds)
+        self.progressBar.setValue(total_seconds)
+        self.timer.start(1000)
+
+    def update_countdown(self):
+        value = self.progressBar.value() - 1
+        self.progressBar.setValue(value)
+        if value <= 0:
+            self.timer.stop()
 
     def delete_activity(self):
         if self.front is None:
